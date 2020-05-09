@@ -1,61 +1,53 @@
-from pywizlight.pywizlight.bulb import wizlight, PilotBuilder
 import asyncio
 import asyncio_dgram
 import sys
+import time
 
+from controlFunctions import WizBulb
 
-# create/get the current thread's asyncio loop
-loop = asyncio.get_event_loop()
+async def main():
+    bulbIp = "192.168.1.240"
+    bulbPort = 38899
+    listenPort = 38900
+    macAddress = "a8bb508bf008"
+    timeout = 60
 
-bulbIp = "192.168.1.240"
-bulbPort = 38899
-macAddress = "a8bb508bf008"
-timeout = 60
-# setup a standard light
-'''
-light = wizlight(bulbIp)
-# setup the light with a custom port
-# light = wizlight(bulbIp)
+    light = WizBulb(bulbIp, listenPort, bulbPort, macAddress)
 
-state = asyncio.run(asyncio.wait_for(light.updateState(), 60))
-print(state.get_state())
-print(state.get_brightness())
+    print("Sending command...")
+    resp = await light.getStatus()
+    print(resp)
+    print(type(resp))
+    config = await light.getConfig()
+    print(config)
 
-r, g, b = state.get_rgb()
-print("{}, {}, {}".format(r, g, b))
-'''
-
-
-async def recData(stream):
-    data, address = await asyncio.wait_for(stream.recv(), timeout)
-    return data
-
-
-async def sendCommand(message):
-    message = r'{"method":' + message + r',"params":{}}'
-    maxTries = 100
-    sleepInterval = 0.5
-    dataStream = await asyncio.wait_for(asyncio_dgram.connect((bulbIp, bulbPort)), timeout)
-
-    receive = asyncio.create_task(recData(dataStream))
-
-    i = 0
-    while not receive.done() and i < maxTries:
-        asyncio.create_task(dataStream.send(bytes(message, "utf-8")))
-        await asyncio.sleep(0.5)
-        i += 1
+    onStatus = await light.isOn()
+    if not onStatus:
+        await light.turnOn()
     
-    await receive
-    resData = receive.result()
+    print(await light.clearSettings())
+    print(await light.getStatus())
 
-    dataStream.close
+    await light.setSpeed(10)
+    '''
+    await light.setRgb(light.getRgb("red"))
+    print("red")
+    await light.setRgb(light.getRgb("green"))
+    print("green")
+    await light.setRgb(light.getRgb("blue"))
+    print("blue")
+    await light.setRgb(light.getRgb("jesus"))
+    '''
+    await light.redToBlue()
+    print(await light.getStatus())
+    await light.setRgb(light.getRgb("jesus"))
+    await light.turnOff()
+    # asyncio.run(light.turnOff())
+    # asyncio.run(asyncio.sleep(3))
+    # asyncio.run(light.turnOn())
 
-    if resData and len(resData):
-        return resData.decode()
 
-
-print("Sending command...")
-resp = asyncio.run(asyncio.wait_for(sendCommand(r'"getPilot"'), 60))
-print(resp)
+if __name__ == "__main__":
+    asyncio.run(main())
 
 
