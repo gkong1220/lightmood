@@ -4,6 +4,7 @@ import sys
 import time
 
 from controlFunctions import WizBulb
+from moodDetect import MoodDetect
 
 async def main():
     bulbIp = "192.168.1.240"
@@ -13,6 +14,9 @@ async def main():
     timeout = 60
 
     light = WizBulb(bulbIp, listenPort, bulbPort, macAddress)
+    mood = MoodDetect()
+
+    mood.startStream()
 
     print("Sending command...")
     resp = await light.getStatus()
@@ -24,6 +28,13 @@ async def main():
     onStatus = await light.isOn()
     if not onStatus:
         await light.turnOn()
+    
+    while True:
+        # dataStream = await.mood.getOutputStream(())
+        val = mood.calcAverageVal(mood.getOutputStream())
+        if val:
+            print(val)
+        time.sleep(0.1)
     
     print(await light.clearSettings())
     print(await light.getStatus())

@@ -4,6 +4,7 @@ import sys
 import json
 import time
 
+
 class WizBulb(object):
 
     def __init__(self, bulbIp, listenerPort, bulbPort, bulbMac):
