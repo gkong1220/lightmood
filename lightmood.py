@@ -7,10 +7,10 @@ from controlFunctions import WizBulb
 from moodDetect import MoodDetect
 
 async def main():
-    bulbIp = "192.168.1.240"
+    bulbIp = "192."
     bulbPort = 38899
     listenPort = 38900
-    macAddress = "a8bb508bf008"
+    macAddress = ""
     timeout = 60
 
     light = WizBulb(bulbIp, listenPort, bulbPort, macAddress)

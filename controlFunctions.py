@@ -154,10 +154,6 @@ class WizBulb(object):
             {"method": "setPilot", "params": {"speed": speed}})
         return await self.sendCommand(command)
 
-
-    async def register(self):
-        return await self.sendCommand(r'{"method": "registration", "id": 1, "params": {"phoneIp": "192.168.86.20", "register": true, "homeId": 410989, "phoneMac": "ec2ce214ce2b"}}')
-
     
     async def infoListener(self):
         print("Listening for info...")
