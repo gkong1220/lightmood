@@ -21,42 +21,48 @@ async def main():
     print("Sending command...")
     resp = await light.getStatus()
     print(resp)
-    print(type(resp))
     config = await light.getConfig()
     print(config)
 
-    onStatus = await light.isOn()
-    if not onStatus:
-        await light.turnOn()
-    
-    while True:
-        # dataStream = await.mood.getOutputStream(())
-        val = mood.calcAverageVal(mood.getOutputStream())
-        if val:
-            print(val)
-        time.sleep(0.1)
-    
-    print(await light.clearSettings())
-    print(await light.getStatus())
+    currentRgb = {"r": 255, "g": 0, "b": 255}
+    speed = 10
 
-    await light.setSpeed(10)
-    '''
-    await light.setRgb(light.getRgb("red"))
-    print("red")
-    await light.setRgb(light.getRgb("green"))
-    print("green")
-    await light.setRgb(light.getRgb("blue"))
-    print("blue")
-    await light.setRgb(light.getRgb("jesus"))
-    '''
-    await light.redToBlue()
-    print(await light.getStatus())
-    await light.setRgb(light.getRgb("jesus"))
-    await light.turnOff()
-    # asyncio.run(light.turnOff())
-    # asyncio.run(asyncio.sleep(3))
-    # asyncio.run(light.turnOn())
+    try:
+        onStatus = await light.isOn()
+        if not onStatus:
+            await light.turnOn()
+        await light.clearSettings()
 
+        lastVal = None
+        lastRms = 0
+        diff = 2
+        noneCount = 0
+        noneFlag = False
+        while True:
+            val = mood.averageOfAverage()
+            if val:
+                noneCount = 0
+                noneFlag = False
+                if lastVal:
+                    diff = mood.calcCentDifference(lastVal, val)
+                lastVal = val
+            else:
+                noneCount += 1
+                if noneCount == 5:
+                    diff = None
+                    currentRgb = {"r": 0, "g": 0, "b": 255}
+                    noneCount = 5
+                    noneFlag = True
+            print(currentRgb)
+            currentRgb = await light.rgbChange(diff, currentRgb, 10, noneFlag)
+
+    except KeyboardInterrupt:
+        time.sleep(2)
+        await light.turnOff()
+    
+    finally:
+        time.sleep(2)
+        await light.turnOff()
 
 if __name__ == "__main__":
     asyncio.run(main())

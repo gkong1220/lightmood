@@ -16,8 +16,8 @@ class WizBulb(object):
         self.infoStream = None
         self.lightOn = False
         self.currRgb = None
+        self.greenToggle = True
         self.speed = 100
-
 
     #---------------Transitional Themes---------------#
     async def redToBlue(self):
@@ -27,21 +27,84 @@ class WizBulb(object):
             currRgb["g"] += self.speed
             await self.setRgb(currRgb)
 
+    async def rgbChange(self, difference, currentRgb, speed, noneFlag):
+        if difference:
+            difference = (difference) * speed
+            if difference > 0:
+                difference = abs(difference)
+                if currentRgb["r"] < (256 - difference):
+                    currentRgb["r"] += (difference)
+                if currentRgb["b"] > difference:
+                    currentRgb["b"] -= (difference)
+            else:
+                difference = abs(difference)
+                if currentRgb["r"] > difference:
+                    currentRgb["r"] -= (difference)
+                if currentRgb["b"] < (256 - difference):
+                    currentRgb["b"] += (difference)
+        
+        if noneFlag:
+            inc = 25
+
+            if currentRgb["g"] < 255 - inc and self.greenToggle:
+                currentRgb["g"] += inc
+            elif currentRgb["g"] + inc - 255 >= 0:
+                self.greenToggle = False
+                currentRgb["g"] -= inc
+            elif currentRgb["g"] - inc <= 0:
+                self.greenToggle = True
+                currentRgb["g"] += inc
+            elif not self.greenToggle:
+                currentRgb["g"] -= inc
+
+            if self.greenToggle:
+                currentRgb["b"] -= inc
+            else:
+                currentRgb["b"] += inc
+            
+        '''
+        '''
+        await self.setRgb(currentRgb)
+
+        return currentRgb
+
     #---------------Get Functions---------------#
-    def getRgb(self, color):
-        colors = {"grape":      {"r": 82,   "g": 65,    "b": 76},
+
+    def warmRgb(self, color):
+        colors = {
+                    0:      {"r": 91,   "g": 140,   "b": 90},
+                    1:     {"r": 227,  "g": 101,   "b": 91},
+                    2:    {"r": 252,  "g": 250,   "b": 164},
+                    3:      {"r": 255,  "g": 0,     "b": 0}
+                    }
+        '''
+        colors = {
                     "pea":      {"r": 91,   "g": 140,   "b": 90},
                     "fire":     {"r": 227,  "g": 101,   "b": 91},
                     "jesus":    {"r": 252,  "g": 250,   "b": 164},
-                    "red":      {"r": 255,  "g": 0,     "b": 0},
-                    "blue":     {"r": 0,    "g": 0,   "b": 255}, 
-                    "green":    {"r": 0,    "g": 255,     "b": 0}
+                    "red":      {"r": 255,  "g": 0,     "b": 0}
                     }
+        '''
         if color == "list":
             return colors.keys()
         else:
             return colors[color]
 
+    def coolRgb(self, color):
+        colors = {0:       {"r": 0,    "g": 0,     "b": 255}, 
+                    1:    {"r": 0,    "g": 255,   "b": 0},
+                    2:    {"r": 82,   "g": 65,    "b": 76}
+        }
+        '''
+        colors = {"blue":       {"r": 0,    "g": 0,     "b": 255}, 
+                    "green":    {"r": 0,    "g": 255,   "b": 0},
+                    "grape":    {"r": 82,   "g": 65,    "b": 76}
+        }
+        '''
+        if color == "list":
+            return colors.keys()
+        else:
+            return colors[color]
 
     def getCurrentRgb(self):
         return self.currRgb
@@ -58,7 +121,8 @@ class WizBulb(object):
 
     #---------------Set Functions---------------#
     async def clearSettings(self):
-        return await self.sendCommand(r'{"method":"setPilot","params":{"sceneId": 0}}')
+        initSetting = json.dumps({"method":"setPilot","params":{"sceneId": 0, "r": 252,  "g": 250,   "b": 164}})
+        return await self.sendCommand(initSetting)
 
 
     async def turnOn(self):
